@@ -43,7 +43,9 @@ class SearchBookViewController: UIViewController {
         self.definesPresentationContext = true
         self.navigationItem.searchController = self.searchController
         
+        #if DEBUG
         self.navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .trash, target: self, action: #selector(cleanCache))
+        #endif
     }
     
     //MARK: - Fetch
@@ -171,6 +173,8 @@ class SearchBookViewController: UIViewController {
         }
     }
     
+    /// For testing: clean cache
+    #if DEBUG
     @objc
     private func cleanCache() {
         
@@ -183,6 +187,7 @@ class SearchBookViewController: UIViewController {
         
         self.present(alert, animated: true, completion: nil)
     }
+    #endif
 }
 
 extension SearchBookViewController: UITableViewDataSource, UITableViewDelegate {
