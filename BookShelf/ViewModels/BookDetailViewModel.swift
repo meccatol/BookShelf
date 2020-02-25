@@ -40,6 +40,8 @@ class BookDetailViewModel {
         if let memo = memo, !memo.isEmpty,
             let memoData = memo.data(using: .utf8) {
             DataCache.shared.setData(memoData, key: self.cacheKey)
+        } else {
+            DataCache.shared.removeData(withKey: self.cacheKey)
         }
     }
     

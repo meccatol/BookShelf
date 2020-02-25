@@ -18,7 +18,10 @@ class BookDetailViewController: UIViewController {
     @IBOutlet private weak var descLabel: UILabel!
     @IBOutlet private weak var linkButton: UIButton!
     @IBOutlet private weak var memoLabel: UILabel!
+    @IBOutlet private weak var memoLabelToDescBottomConstraint: NSLayoutConstraint!
+    
     @IBOutlet private weak var textView: UITextView!
+    @IBOutlet private weak var textViewBottomConstraint: NSLayoutConstraint!
     private weak var rightBarButtonItem: UIBarButtonItem!
     
     private let isbn13OfTargetBook: String
@@ -55,6 +58,9 @@ class BookDetailViewController: UIViewController {
         self.navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .save, target: self, action: #selector(touchUpInsideOfRightBarSaveButton))
         self.rightBarButtonItem = self.navigationItem.rightBarButtonItem
         self.rightBarButtonItem.isEnabled = false
+        
+        NotificationCenter.default.addObserver(self, selector: #selector(adjustTextViewConstraint(_:)), name: UIResponder.keyboardWillShowNotification, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(adjustTextViewConstraint(_:)), name: UIResponder.keyboardWillHideNotification, object: nil)
     }
     
     //MARK: - Fetch
@@ -111,6 +117,31 @@ class BookDetailViewController: UIViewController {
         self.textView.resignFirstResponder()
         self.viewModel.memo = self.textView.text
         self.viewModel.saveMemoIfPossible()
+    }
+    
+    @objc
+    private func adjustTextViewConstraint(_ notification: Notification) {
+        
+        guard let userInfo = notification.userInfo,
+            let isLocal = userInfo[UIResponder.keyboardIsLocalUserInfoKey] as? Bool,
+            let keyboardEndFrame = userInfo[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect,
+            let windowBounds = self.view.window?.bounds else { return }
+        
+        guard isLocal else { return }
+        
+        if windowBounds.height == keyboardEndFrame.minY { // dismiss
+            self.textViewBottomConstraint.constant = 20.0 // default value
+            self.memoLabelToDescBottomConstraint.constant = 10
+            self.descLabel.alpha = 1.0
+        } else {
+            self.textViewBottomConstraint.constant = windowBounds.height - keyboardEndFrame.minY + 20 - self.view.safeAreaInsets.bottom
+            self.memoLabelToDescBottomConstraint.constant = -self.descLabel.frame.height
+            self.descLabel.alpha = 0.0
+        }
+        
+        UIView.animate(withDuration: userInfo[UIResponder.keyboardAnimationDurationUserInfoKey] as! TimeInterval) {
+            self.view.layoutIfNeeded()
+        }
     }
 }
 

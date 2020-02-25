@@ -123,6 +123,14 @@ class DiskCache {
         }
     }
     
+    fileprivate func remove(withKey key: String) {
+        DispatchQueue.global().async {
+            if FileManager.default.fileExists(atPath: self.cacheUrl(with: key).path) {
+                try? FileManager.default.removeItem(atPath: self.cacheUrl(with: key).path)
+            }
+        }
+    }
+    
     private func cacheUrl(with key: String) -> URL {
         return self.cacheUrl.appendingPathComponent(key, isDirectory: false)
     }
@@ -162,7 +170,19 @@ final class ImageCache: DiskCache {
             completion(memCachedImage)
             return
         }
-        super.getObject(withKey: key, decodedType: UIImage.self, completion: completion)
+        super.getObject(withKey: key, decodedType: UIImage.self) { image in
+            guard let image = image else {
+                completion(nil)
+                return
+            }
+            ImageCache.memCache.setObject(image, forKey: key as NSString)
+            completion(image)
+        }
+    }
+
+    func removeImage(withKey key: String) {
+        ImageCache.memCache.removeObject(forKey: key as NSString)
+        super.remove(withKey: key)
     }
     
     override func cleanCache() {
@@ -199,8 +219,14 @@ final class DataCache: DiskCache {
                 completion(nil)
                 return
             }
+            DataCache.memCache.setObject(nsData, forKey: key as NSString)
             completion(nsData as Data)
         }
+    }
+    
+    func removeData(withKey key: String) {
+        DataCache.memCache.removeObject(forKey: key as NSString)
+        super.remove(withKey: key)
     }
     
     override func cleanCache() {
