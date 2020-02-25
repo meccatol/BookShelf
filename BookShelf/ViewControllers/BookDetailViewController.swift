@@ -60,8 +60,12 @@ class BookDetailViewController: UIViewController {
     //MARK: - Fetch
     private func fetch(completion: (() -> Void)? = nil) {
         
+        LoadingHUD.startLoading()
         APIClient<API.Book>.request(.detail(self.isbn13OfTargetBook), decodedType: BookDetail.self) { [weak self] (response) in
-            defer { completion?() }
+            defer {
+                completion?()
+                LoadingHUD.stopLoading()
+            }
             
             guard let unwrappedSelf = self, let bookDetail = response.decodedObject, response.error == nil else {
                 if let error = response.error {

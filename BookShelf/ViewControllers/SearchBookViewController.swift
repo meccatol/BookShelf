@@ -68,12 +68,15 @@ class SearchBookViewController: UIViewController {
             return
         }
         
+        LoadingHUD.startLoading()
+        
         let searchAPICall = { [weak self] in
             
             APIClient<API.Book>.request(.search(searchText, page), decodedType: BookList.self) { (response) in
                 
                 defer {
                     completion?()
+                    LoadingHUD.stopLoading()
                 }
                 
                 guard let bookList = response.decodedObject, response.error == nil else {
@@ -103,6 +106,7 @@ class SearchBookViewController: UIViewController {
                     if let cachedSearchData = cachedSearchData, let bookList = cachedSearchData.decoded(to: BookList.self) {
                         
                         self?.searchBookListCompletion(bookList: bookList, searchText: searchText, completion: completion)
+                        LoadingHUD.stopLoading()
                     } else {
                         
                         searchAPICall()

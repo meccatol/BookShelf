@@ -23,6 +23,7 @@ class NewBooksViewController: UIViewController {
     
     //MARK: - Setups
     private func setups() {
+        self.navigationItem.title = "What's new!"
         self.tableView.refreshControl = UIRefreshControl()
         self.tableView.refreshControl?.addTarget(self, action: #selector(self.handleRefreshControl), for: .valueChanged)
         BookListCellModel.CellType.registerWithNib(to: self.tableView)
@@ -30,9 +31,13 @@ class NewBooksViewController: UIViewController {
     
     //MARK: - Fetch
     private func fetch(completion: (() -> Void)? = nil) {
+        LoadingHUD.startLoading()
         
         APIClient<API.Book>.request(.new, decodedType: BookList.self) { [weak self] (response) in
-            defer { completion?() }
+            defer {
+                completion?()
+                LoadingHUD.stopLoading()
+            }
             
             guard let unwrappedSelf = self, let bookList = response.decodedObject, response.error == nil else {
                 if let error = response.error {
